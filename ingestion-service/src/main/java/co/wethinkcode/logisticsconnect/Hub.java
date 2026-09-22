@@ -13,5 +13,17 @@ public class Hub {
     // "we genuinely don't know" (e.g. every duplicate row for this hub had a
     // placeholder value like N/A) rather than silently guessing false.
     public Boolean active;
+
+    // Jackson needs a no-argument constructor to build objects when reading JSON
+    // back in (e.g. inside hub-service, which receives Hub objects over REST).
+    public Hub() {
+    }
+
+    public Hub(String hubId, String province, String sortingCenter, Boolean active) {
+        this.hubId = hubId;
+        this.province = province;
+        this.sortingCenter = sortingCenter;
+        this.active = active;
+    }
 }
 
