@@ -119,4 +119,34 @@ public class HubCsvCleaner {
         }
         return PROVINCE_ALIASES.getOrDefault(cleaned.toLowerCase(), cleaned);
     }
+
+    /**
+     * Normalizes every boolean-ish spelling we've seen (Y/N, yes/no, 1/0,
+     * true/false, any casing) down to a real Boolean. Anything that's a known
+     * placeholder - or just plain unrecognised - comes back as null: we'd
+     * rather admit we don't know than silently guess "false".
+     */
+    private static Boolean cleanBoolean(String value) {
+        if (value == null) {
+            return null;
+        }
+        String v = value.trim().toLowerCase();
+        if (isPlaceholder(v)) {
+            return null;
+        }
+        switch (v) {
+            case "y":
+            case "yes":
+            case "1":
+            case "true":
+                return true;
+            case "n":
+            case "no":
+            case "0":
+            case "false":
+                return false;
+            default:
+                return null;
+        }
+    }
 }
