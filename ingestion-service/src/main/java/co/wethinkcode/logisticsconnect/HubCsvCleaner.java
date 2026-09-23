@@ -7,10 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HubCsvCleaner {
 
@@ -153,4 +150,27 @@ public class HubCsvCleaner {
     private static boolean isPlaceholder(String value) {
         return PLACEHOLDER_VALUES.contains(value.trim().toLowerCase());
     }
+
+    // Duplicate detection & resolution
+    // Two rows are treated as the same real-world hub when they share the same
+    // cleaned province + sorting center - that's what actually identifies a
+    // place, whereas the hub_id and active flag are exactly the fields that
+    // vary (and conflict) between duplicate rows in this dataset.
+    private static List<Hub> deduplicate(List<Hub> hubs) {
+        // LinkedHashMap keeps insertion order, which is what the "first seen"
+        // tie-break rules below rely on.
+        Map<String, List<Hub>> groupedByPlace = new LinkedHashMap<>();
+
+        for (Hub hub : hubs) {
+            String placeKey = hub.province + "|" + hub.sortingCenter;
+            groupedByPlace.computeIfAbsent(placeKey, key -> new ArrayList<>()).add(hub);
+        }
+        List<Hub> result = new ArrayList<>();
+        for (List<Hub> group : groupedByPlace.values()) {
+            result.add(resolveGroup(group));
+        }
+        return result;
+    }
+
+
 }
