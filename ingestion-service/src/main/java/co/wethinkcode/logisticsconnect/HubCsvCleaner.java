@@ -95,4 +95,15 @@ public class HubCsvCleaner {
         }
         return result.toString();
     }
+
+    /**
+     * IDs get their own rule: no internal spaces at all (not even a single
+     * one), and always upper case, so "h-501" and "H-501 " both become "H-501".
+     */
+    private static String cleanId(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim().replaceAll("\\s+", "").toUpperCase();
+    }
 }
