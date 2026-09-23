@@ -3,6 +3,7 @@ package co.wethinkcode.logisticsconnect;
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -45,5 +46,18 @@ public class IngestionServiceApp {
             }
         });
     }
+
+    private static List<Hub> loadCleanedHubs() throws Exception {
+        // hubs-global.csv sits in src/main/resources, which Maven copies onto
+        // the classpath - so we read it as a classpath resource rather than a
+        // plain file path (that also keeps it working once packaged into a jar).
+        try (InputStream csvInput = IngestionServiceApp.class.getClassLoader()
+                .getResourceAsStream("hubs-global.csv")) {
+
+            if (csvInput == null) {
+                throw new IllegalStateException("Could not find hubs-global.csv on the classpath");
+            }
+            return HubCsvCleaner.loadAndClean(csvInput);
+        }
     }
 }
