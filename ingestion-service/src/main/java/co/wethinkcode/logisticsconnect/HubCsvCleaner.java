@@ -172,5 +172,36 @@ public class HubCsvCleaner {
         return result;
     }
 
+    private static Hub resolveGroup(List<Hub> group) {
+        Hub first = group.get(0);
+        if (group.size() == 1) {
+            return first;
+        }
+        int votesTrue = 0;
+        int votesFalse = 0;
+        Boolean firstNonNull = null;
 
+        for (Hub hub : group) {
+            if (hub.active == null) {
+                continue;
+            }
+            if (firstNonNull == null) {
+                firstNonNull = hub.active;
+            }
+            if (hub.active) {
+                votesTrue++;
+            } else {
+                votesFalse++;
+            }
+        }
+        Boolean resolvedActive;
+        if (votesTrue == 0 && votesFalse == 0) {
+            resolvedActive = null; // every duplicate row was unknown too
+        } else if (votesTrue == votesFalse) {
+            resolvedActive = firstNonNull; // tie-break: keep whichever we saw first
+        } else {
+            resolvedActive = votesTrue > votesFalse;
+        }
+        return new Hub(first.hubId, first.province, first.sortingCenter, resolvedActive);
+    }
 }
