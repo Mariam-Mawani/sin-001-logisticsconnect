@@ -149,4 +149,8 @@ public class HubCsvCleaner {
                 return null;
         }
     }
+
+    private static boolean isPlaceholder(String value) {
+        return PLACEHOLDER_VALUES.contains(value.trim().toLowerCase());
+    }
 }
