@@ -106,4 +106,17 @@ public class HubCsvCleaner {
         }
         return value.trim().replaceAll("\\s+", "").toUpperCase();
     }
+
+    /**
+     * Province needs the general text cleanup, plus mapping known spelling
+     * variants onto one canonical name, plus turning a missing/placeholder
+     * province into an explicit "Unknown" rather than an empty string.
+     */
+    private static String cleanProvince(String value) {
+        String cleaned = cleanText(value);
+        if (isPlaceholder(cleaned)) {
+            return "Unknown";
+        }
+        return PROVINCE_ALIASES.getOrDefault(cleaned.toLowerCase(), cleaned);
+    }
 }
