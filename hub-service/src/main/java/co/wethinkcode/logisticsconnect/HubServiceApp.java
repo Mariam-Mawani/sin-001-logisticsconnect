@@ -74,4 +74,16 @@ public class HubServiceApp {
         }
         return null;
     }
+
+    /**
+     * Same reasoning as findHubById: pulled out so a test can check the
+     * "distinct provinces" behaviour directly against a small, made-up list.
+     */
+    static Set<String> distinctProvinces(List<Hub> hubs) {
+        Set<String> provinces = new LinkedHashSet<>();
+        for (Hub hub : hubs) {
+            provinces.add(hub.province);
+        }
+        return provinces;
+    }
 }
