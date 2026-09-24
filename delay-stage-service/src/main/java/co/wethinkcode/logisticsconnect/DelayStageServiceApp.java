@@ -122,7 +122,13 @@ public class DelayStageServiceApp {
         }
     }
 
-
+    /**
+     * The JSON body shape for POST /delay-stage/{hubId}. A tiny class with
+     * public fields is all Jackson needs to deserialize {"stage": 3}.
+     */
+    public static class StageUpdateRequest {
+        public int stage;
+    }
 }
 
 // MQ TODO: publishes to ActiveMQ topic MqConfig.TOPIC at MqConfig.BROKER_URL (see co.wethinkcode.logisticsconnect.mq.MqConfig)
