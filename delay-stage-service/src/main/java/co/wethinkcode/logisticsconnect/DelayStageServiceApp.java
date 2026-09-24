@@ -71,6 +71,15 @@ public class DelayStageServiceApp {
         });
 
     }
+
+    /**
+     * True when a stage is within the documented 0-8 range. Pulled out of the
+     * route handler so it's testable on its own, with no Javalin involved.
+     * No modifier (package-private) so the test class can call it directly.
+     */
+    static boolean isValidStage(int stage) {
+        return stage >= MIN_STAGE && stage <= MAX_STAGE;
+    }
 }
 
 // MQ TODO: publishes to ActiveMQ topic MqConfig.TOPIC at MqConfig.BROKER_URL (see co.wethinkcode.logisticsconnect.mq.MqConfig)
