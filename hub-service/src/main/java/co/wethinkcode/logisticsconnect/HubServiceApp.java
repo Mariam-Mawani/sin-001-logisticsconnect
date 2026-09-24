@@ -123,12 +123,10 @@ public class HubServiceApp {
             } catch (Exception e) {
                 lastError = e;
             }
-
             System.out.println("Could not reach ingestion-service on attempt " + attempt
                     + "/" + maxAttempts + " - is it running on port 7050? Retrying...");
             Thread.sleep(1000);
         }
-
         throw new IllegalStateException(
                 "Failed to load hubs from ingestion-service after " + maxAttempts + " attempts. "
                         + "Make sure ingestion-service is running on port 7050 before starting hub-service.",
