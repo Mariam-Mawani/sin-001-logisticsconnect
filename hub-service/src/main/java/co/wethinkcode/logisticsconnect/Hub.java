@@ -12,4 +12,9 @@ public class Hub {
     public String sortingCenter;
     public Boolean active;
 
+
+    // Needed so Jackson can build one of these while reading the JSON array
+    // that comes back from ingestion-service's GET /hubs.
+    public Hub() {
+    }
 }
