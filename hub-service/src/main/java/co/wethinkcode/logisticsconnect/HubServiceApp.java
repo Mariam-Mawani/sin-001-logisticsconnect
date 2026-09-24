@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.*;
 
 /**
  * hub-service is the place-name source of truth for the rest of LogisticsConnect.
@@ -85,5 +88,50 @@ public class HubServiceApp {
             provinces.add(hub.province);
         }
         return provinces;
+    }
+
+    /**
+     * Calls ingestion-service's GET /hubs and parses the JSON array into our
+     * own Hub objects. Retries a few times with a short pause, since in the
+     * normal startup order ingestion-service should already be up - but if
+     * someone starts these out of order (or it's still booting), we'd rather
+     * wait a moment than fail immediately.
+     */
+    private static List<Hub> fetchHubsFromIngestionService() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(INGESTION_URL))
+                .timeout(Duration.ofSeconds(5))
+                .GET()
+                .build();
+
+        int maxAttempts = 5;
+        Exception lastError = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    Hub[] hubs = JSON.readValue(response.body(), Hub[].class);
+                    List<Hub> result = new ArrayList<>();
+                    for (Hub hub : hubs) {
+                        result.add(hub);
+                    }
+                    return result;
+                }
+                lastError = new RuntimeException("ingestion-service returned HTTP " + response.statusCode());
+            } catch (Exception e) {
+                lastError = e;
+            }
+
+            System.out.println("Could not reach ingestion-service on attempt " + attempt
+                    + "/" + maxAttempts + " - is it running on port 7050? Retrying...");
+            Thread.sleep(1000);
+        }
+
+        throw new IllegalStateException(
+                "Failed to load hubs from ingestion-service after " + maxAttempts + " attempts. "
+                        + "Make sure ingestion-service is running on port 7050 before starting hub-service.",
+                lastError);
     }
 }
