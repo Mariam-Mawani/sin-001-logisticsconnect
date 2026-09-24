@@ -17,4 +17,11 @@ public class Hub {
     // that comes back from ingestion-service's GET /hubs.
     public Hub() {
     }
+
+    public Hub(String hubId, String province, String sortingCenter, Boolean active) {
+        this.hubId = hubId;
+        this.province = province;
+        this.sortingCenter = sortingCenter;
+        this.active = active;
+    }
 }
