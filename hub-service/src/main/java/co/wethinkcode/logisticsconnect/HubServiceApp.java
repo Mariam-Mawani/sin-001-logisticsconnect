@@ -60,4 +60,18 @@ public class HubServiceApp {
             ctx.json(Map.of("reloaded", hubCache.size()));
         });
     }
+
+    /**
+     * Pure lookup logic, pulled out of the route handler so it can be unit
+     * tested without spinning up Javalin or ingestion-service. No modifier
+     * (package-private) so the test class in this same package can call it.
+     */
+    static Hub findHubById(List<Hub> hubs, String hubId) {
+        for (Hub hub : hubs) {
+            if (hub.hubId.equals(hubId)) {
+                return hub;
+            }
+        }
+        return null;
+    }
 }
