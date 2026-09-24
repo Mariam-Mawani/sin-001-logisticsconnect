@@ -80,6 +80,16 @@ public class DelayStageServiceApp {
     static boolean isValidStage(int stage) {
         return stage >= MIN_STAGE && stage <= MAX_STAGE;
     }
+
+    /**
+     * True when the new stage is actually different from whatever we had
+     * before (including the case where we'd never seen this hub before at
+     * all). This is exactly the condition that decides whether we publish to
+     * the MQ topic, so it's worth being able to test on its own.
+     */
+    static boolean hasStageChanged(Integer previousStage, int newStage) {
+        return previousStage == null || !previousStage.equals(newStage);
+    }
 }
 
 // MQ TODO: publishes to ActiveMQ topic MqConfig.TOPIC at MqConfig.BROKER_URL (see co.wethinkcode.logisticsconnect.mq.MqConfig)
