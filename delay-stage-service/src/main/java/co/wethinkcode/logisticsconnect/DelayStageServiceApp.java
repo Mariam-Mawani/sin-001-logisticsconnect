@@ -1,9 +1,12 @@
 package co.wethinkcode.logisticsconnect;
 
+import co.wethinkcode.logisticsconnect.mq.MqConfig;
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
+import org.apache.activemq.ActiveMQConnectionFactory;
 
-import javax.jms.JMSException;
+import javax.jms.*;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -52,7 +55,6 @@ public class DelayStageServiceApp {
                         .json(Map.of("error", "stage must be between " + MIN_STAGE + " and " + MAX_STAGE));
                 return;
             }
-
             Integer previousStage = stageByHub.put(hubId, body.stage);
             boolean stageChanged = hasStageChanged(previousStage, body.stage);
 
@@ -66,10 +68,8 @@ public class DelayStageServiceApp {
                     System.out.println("Warning: could not publish stage change to MQ: " + e.getMessage());
                 }
             }
-
             ctx.json(Map.of("hubId", hubId, "stage", body.stage, "published", stageChanged));
         });
-
     }
 
     /**
@@ -90,6 +90,39 @@ public class DelayStageServiceApp {
     static boolean hasStageChanged(Integer previousStage, int newStage) {
         return previousStage == null || !previousStage.equals(newStage);
     }
+
+    /**
+     * Sends one message to package-status-topic. We open a fresh connection
+     * for each publish rather than keeping one open for the service's whole
+     * lifetime - simpler to reason about with no shared connection state to
+     * manage, at the cost of being slower than a real high-throughput producer
+     * would want. Fine for this scale.
+     */
+    private static void publishStageChange(String hubId, int stage) throws JMSException {
+        ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(MqConfig.BROKER_URL);
+        // Plain try/finally rather than try-with-resources: not every JMS API
+        // version makes Connection AutoCloseable, and this way works either way.
+        Connection connection = factory.createConnection();
+        try {
+            connection.start();
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Topic topic = session.createTopic(MqConfig.TOPIC);
+            MessageProducer producer = session.createProducer(topic);
+
+            String json = String.format(
+                    "{\"hubId\":\"%s\",\"stage\":%d,\"timestamp\":\"%s\"}",
+                    hubId, stage, Instant.now().toString());
+
+            TextMessage message = session.createTextMessage(json);
+            producer.send(message);
+
+            System.out.println("Published to " + MqConfig.TOPIC + ": " + json);
+        } finally {
+            connection.close();
+        }
+    }
+
+
 }
 
 // MQ TODO: publishes to ActiveMQ topic MqConfig.TOPIC at MqConfig.BROKER_URL (see co.wethinkcode.logisticsconnect.mq.MqConfig)
